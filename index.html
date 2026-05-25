@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Goal Rider Biz - V1.12</title>
+    <title>Goal Rider Biz - V1.13</title>
 
     <link rel="icon" href="https://img.icons8.com/clouds/256/delivery-man.png" type="image/png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/clouds/256/delivery-man.png">
@@ -92,14 +92,12 @@
         .weather-btn.active[data-w="曇り"] { background: #636e72 !important; }
         .weather-btn.active[data-w="晴れ"] { background: #f39c12 !important; }
 
-        /* 複数写真とコメント用スタイル */
         .photo-add-btn { background: #3498db; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 0.9em; cursor: pointer; width: 100%; box-sizing: border-box; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .spot-photo-item { display: flex; flex-direction: column; gap: 8px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 10px; position: relative; }
         .spot-photo-item img { width: 100%; border-radius: 6px; cursor: zoom-in; }
         .spot-photo-comment { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #aaa; box-sizing: border-box; font-size: 0.9em; }
         .remove-photo-btn { position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; border: none; width: 30px; height: 30px; border-radius: 15px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 
-        /* フルスクリーンズームビューワー */
         #imageViewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #000; z-index: 9999; overflow: auto; align-items: center; justify-content: center; }
         .viewer-close { position: fixed; top: 20px; right: 20px; background: rgba(255,255,255,0.3); color: white; width: 40px; height: 40px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; cursor: pointer; z-index: 10000; }
     </style>
@@ -117,7 +115,7 @@
             <button id="tabMap" class="tab-btn" onclick="showPage('map')">マップ</button>
         </div>
         
-        <div class="version-bar">GoalRider V1.12</div>
+        <div class="version-bar">GoalRider V1.13</div>
 
         <div id="pageSales" class="content-area active">
             <div class="rider-selector">
@@ -172,6 +170,7 @@
             <div id="map" style="width:100%; height:100%;"></div>
             <div class="map-ui">
                 <button class="ui-btn" style="background:#fff; color:#2c3e50;" onclick="toggleMapType()" id="layerBtn">🛰️</button>
+                <button class="ui-btn" style="background:white; color:#e67e22;" onclick="searchLocationPrompt()">🔍</button>
                 <button class="ui-btn" style="background:white; color:#3498db;" onclick="goToCurrentLocation()">🎯</button>
                 <button class="ui-btn" style="background:#f1c40f; color:black; font-weight:bold; font-size:0.7em;" onclick="analyzeMap()">分析</button>
                 <button class="ui-btn" style="background:#34495e; color:white; font-size:0.7em; font-weight:bold;" onclick="openSpotList()">リスト</button>
@@ -309,7 +308,6 @@
         let currentView = 'month', referenceDate = new Date(), myChart, myExpChart, myHourlyChart, dayAnalysisChart, weatherAnalysisChart;
         let currentFilter = 'すべて', currentKana = '全', selectedWeather = "";
 
-        // V1.12: 写真データ一時保存用配列
         window.tempSpotPhotos = [];
 
         window.onload = () => {
@@ -318,7 +316,27 @@
             fetchCloudSales();
         };
 
-        // 画像ビューワーロジック
+        // V1.13: 緯度経度からジャンプする機能
+        function searchLocationPrompt() {
+            const input = prompt("ジャンプする緯度,経度を入力してください\n(例: 12.898947,100.870598)");
+            if (input) {
+                const parts = input.split(',');
+                if (parts.length >= 2) {
+                    const lat = parseFloat(parts[0].trim());
+                    const lng = parseFloat(parts[1].trim());
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        map.flyTo([lat, lng], 18);
+                        // 到着地点が分かりやすいように一時的なポップアップを表示
+                        L.popup().setLatLng([lat, lng]).setContent("📍 検索地点").openOn(map);
+                    } else {
+                        alert("数値が正しくありません。");
+                    }
+                } else {
+                    alert("「緯度,経度」の形式で入力してください。");
+                }
+            }
+        }
+
         function openImageViewer(src) {
             document.getElementById('appUI').style.display = 'none';
             document.getElementById('viewerImg').src = src;
@@ -333,7 +351,6 @@
             window.scrollTo(0, 0); 
         }
 
-        // 地点の複数写真のハンドリング
         async function handleSpotPhoto(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
